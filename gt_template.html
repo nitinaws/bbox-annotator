@@ -1,0 +1,61 @@
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.js"></script>
+<script src="https://s3.amazonaws.com/groundtruthnw/bbannotator/coderepo/bbox_annotator.js"></script>
+
+<h1>Annotate Receipts by drawing Bounding Boxes and entering text in text box next to Bounding Box</h1>
+<div id="bbox_annotator" style="display:inline-block"></div>
+<div style="display:inline-block;vertical-align:top;">
+  <div>
+    <textarea id="annotation_data" name="annotation" rows="30" cols="50" style="font-family:monospace;" readonly></textarea>
+  </div>
+  <div>
+    <input id="reset_button" type="reset" />
+  </div>
+</div>
+
+<div id='image-url' style="display: none;">
+  {{ task.input.taskObject | grant_read_access }}
+</div>
+
+<crowd-form>
+  <input name="annotations" id="annotations" type="hidden">
+
+  <!-- Prevent crowd-form from creating its own button -->
+  <crowd-button form-action="submit" style="display: none;"></crowd-button>
+</crowd-form>
+<crowd-button id="submitButton">Submit</crowd-button>
+
+<script>
+  document.querySelector('crowd-form').onsubmit = function() {
+    document.getElementById('annotations').value = JSON.stringify(JSON.parse(document.querySelector("#annotation_data").value));
+  };
+  document.getElementById('submitButton').onclick = function() {
+    document.querySelector('crowd-form').submit();
+  };
+</script>
+
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    // Initialize the bounding-box annotator.
+    var annotator = new BBoxAnnotator({
+      url: document.querySelector('#image-url').innerText,
+      input_method: 'text',    // Can be one of ['text', 'select', 'fixed']
+      labels: "object",
+      guide: true,
+      onchange: function(entries) {
+        // Input the text area on change. Use "hidden" input tag unless debugging.
+        // <input id="annotation_data" name="annotation_data" type="hidden" />
+        // $("#annotation_data").val(JSON.stringify(entries))
+        $("#annotation_data").text(JSON.stringify(entries, null, "  "));
+      }
+    });
+    // Initialize the reset button.
+    $("#reset_button").click(function(e) {
+      annotator.clear_all();
+    })
+  });
+</script>
+
